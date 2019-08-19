@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: config-service
+  namespace: default
+spec:
+  revisionHistoryLimit: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  replicas: 2
+  selector:
+    matchLabels:
+      app: config-service
+  template:
+    metadata:
+      labels:
+        app: config-service
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - config-service
+              weight: 1
+      containers:
+        - name: config-service
+          image: freemanliu/config-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              httpGet:
+                port: 8881
+                path: /spring/shutdown
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8881
+            periodSeconds: 5
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8881
+            periodSeconds: 5
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 5
+          resources:
+            requests:
+              memory: 2Gi
+            limits:
+              memory: 2Gi
+          ports:
+            - containerPort: 8881
+          env:
+            - name: EUREKA_SERVER
+              value: "http://eureka-0.eureka:8761/eureka/,http://eureka-1.eureka:8761/eureka/,http://eureka-2.eureka:8761/eureka/"
+            - name: GIT_SERVER
+              value: ""
+            - name: GIT_USERNAME
+              value: "补全信息1"
+            - name: GIT_PASSWORD
+              value: "补全信息"

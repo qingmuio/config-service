@@ -1,0 +1,29 @@
+server:
+  port: 8881
+  undertow:
+    io-threads: 2
+    worker-threads: 50
+spring:
+  application:
+    name: config-service
+  cloud:
+    config:
+      label: master
+      server:
+        git:
+          uri: ${GIT_SERVER}
+          username: ${GIT_USERNAME}
+          password: ${GIT_PASSWORD}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  logPath: /var/log/${spring.application.name}
+  level:
+    com.netflix.discovery.shared.resolver.aws: ERROR
+
+
